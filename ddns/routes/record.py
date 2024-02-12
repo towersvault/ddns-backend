@@ -1,6 +1,9 @@
-import functools
+from flask import Blueprint, jsonify, request, Response, current_app
 
-from flask import Blueprint, jsonify, request
+from ddns.db import DataHandler
+from ddns import exceptions
+
+import logging
 
 
 blueprint = Blueprint('record', __name__, url_prefix='/record')
@@ -15,12 +18,28 @@ def update():
         api_token = request.form['api_token']
     else:
         api_token = request.args.get('api_token')
-    
-    print(f'API Token: {api_token}')
 
-    return 'None'
+    database = DataHandler(current_app.config['DATABASE'])
+
+    ip_addr = request.remote_addr
+
+    logging.info(f'Update DNS for TOKEN:{api_token} to IP:{ip_addr}')
+    
+    try:
+        database.update_record(api_token, ip_addr)
+    except exceptions.APITokenNotFoundError as e:
+        logging.error(f'/record/update [{request.method}]: {str(e)}')
+
+        return Response('API token not authorized.', status=401)
+
+    return Response(status=200)
 
 
 @blueprint.route('/get', methods=['GET'])
 def get():
+    pass
+
+
+@blueprint.route('/create', methods=['POST'])
+def create():
     pass

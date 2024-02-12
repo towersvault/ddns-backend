@@ -9,11 +9,11 @@ import os
 
 
 TEST_DATA = {
-    'dns_record': 'test.softwxre.io',
+    'dns_record': f'test.{str(uuid4())[:4]}.softwxre.io',
     'api_token': str(uuid4())
 }
 
-TEST_DB = f'test-ddns-{str(uuid4())}'
+TEST_DB = 'test-ddns-db'
 
 TEST_IP = '255.0.0.1'
 
@@ -29,8 +29,9 @@ def run_before_and_after_tests():
     yield
 
     # Teardown
-    print('Tearing down tests..')
-    os.remove(f'{TEST_DB}.sqlite')
+    # print(f'Tearing down {os.path.basename(__file__)}')
+    # if os.path.exists(f'{TEST_DB}.sqlite'):
+    #     os.remove(f'{TEST_DB}.sqlite')
 
 
 def create_test_record():

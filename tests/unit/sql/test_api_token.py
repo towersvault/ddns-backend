@@ -1,4 +1,5 @@
 from ddns.db import DataHandler
+from tests.utils import truthy, falsy
 
 from uuid import uuid4
 
@@ -7,11 +8,11 @@ import pytest
 
 
 TEST_DATA = {
-    'dns_record': 'test.softwxre.io',
-    'api_token': 'aac90ebe-7d8c-4ad8-9d7a-68e280da3d41'
+    'dns_record': f'test.{str(uuid4())[:4]}.softwxre.io',
+    'api_token': str(uuid4())
 }
 
-TEST_DB = f'test-ddns-{str(uuid4())}'
+TEST_DB = 'test-ddns-db'
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -24,15 +25,9 @@ def run_before_and_after_tests():
     yield
 
     # Teardown
-    os.remove(f'{TEST_DB}.sqlite')
-
-
-def truthy(value):
-    return bool(value)
-
-
-def falsy(value):
-    return not bool(value)
+    # print(f'Tearing down {os.path.basename(__file__)}')
+    # if os.path.exists(f'{TEST_DB}.sqlite'):
+    #     os.remove(f'{TEST_DB}.sqlite')
 
 
 def test_api_token():

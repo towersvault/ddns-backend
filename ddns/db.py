@@ -9,6 +9,7 @@ from uuid import uuid4
 from . import exceptions
 
 import os
+import logging
 
 
 class Base(DeclarativeBase):
@@ -36,10 +37,22 @@ class DDNS(Base):
         return f'DDNS(dns_record={self.dns_record!r}, ip_address={self.ip_address!r})'
 
 
-class DataHandler:
-    def __init__(self, database=os.getenv('DATABASE')):
-        self.__engine = create_engine(f'sqlite:///{database}.sqlite')
+class SingletonMeta(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class DataHandler(metaclass=SingletonMeta):
+    def __init__(self, database_name=os.getenv('DATABASE')):
+        self.__engine = create_engine(f'sqlite:///{database_name}.sqlite')
         Base.metadata.create_all(self.__engine)
+
+        logging.info(f'Initialized DB "{database_name}"')
 
     def __open_session(self) -> Session:
         return Session(self.__engine)
@@ -105,6 +118,10 @@ class DataHandler:
             ).scalar_one()
 
             ddns_data.ip_address = ip_address
+            ddns_data.last_updated = datetime.now()
 
             session.commit()
+
+
+
         

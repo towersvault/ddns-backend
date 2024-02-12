@@ -1,5 +1,7 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+log_cli = true
+log_cli_level = "INFO"
 
 [tool.coverage.run]
 branch = true

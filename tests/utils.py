@@ -12,3 +12,11 @@ def cleanup(function):
         
         return function(*args, **kwargs)
     return wrapper
+
+
+def truthy(value):
+    return bool(value)
+
+
+def falsy(value):
+    return not bool(value)
