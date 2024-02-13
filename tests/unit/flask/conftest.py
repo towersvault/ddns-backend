@@ -2,6 +2,7 @@ from flask import current_app
 from uuid import uuid4
 
 from ddns import create_app
+from ddns import utils
 from ddns.db import DataHandler
 
 import pytest
@@ -10,7 +11,7 @@ import os
 
 TEST_DATA = {
     'dns_record': f'test.{str(uuid4())[:4]}.softwxre.io',
-    'api_token': str(uuid4())
+    'api_token': utils.generate_full_token_pair()
 }
 
 

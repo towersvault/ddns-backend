@@ -1,3 +1,4 @@
+from ddns import utils
 from ddns.db import DataHandler
 from tests.utils import truthy, falsy
 
@@ -5,11 +6,12 @@ from uuid import uuid4
 
 import os
 import pytest
+import logging
 
 
 TEST_DATA = {
     'dns_record': f'test.{str(uuid4())[:4]}.softwxre.io',
-    'api_token': str(uuid4())
+    'api_token': utils.generate_full_token_pair()
 }
 
 TEST_DB = 'test-ddns-db'
@@ -19,6 +21,8 @@ TEST_DB = 'test-ddns-db'
 def run_before_and_after_tests():
     """Fixture to execute asserts before and after a test is run."""
     # Setup
+    logging.debug(f'TEST_DATA: {TEST_DATA}')
+
     global database
     database = DataHandler(TEST_DB)
 
@@ -36,9 +40,9 @@ def test_api_token():
         api_token=TEST_DATA['api_token']
     )
 
-    assert truthy(database.api_token_exists(
+    assert truthy(database.identifier_token_exists(
         api_token=TEST_DATA['api_token']
     ))
-    assert falsy(database.api_token_exists(
-        api_token='5804eefa-b388-41e8-99dnotavalidtoken'
+    assert falsy(database.identifier_token_exists(
+        api_token=utils.generate_full_token_pair()
     ))

@@ -1,7 +1,7 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 log_cli = true
-log_cli_level = "INFO"
+log_cli_level = "DEBUG"
 
 [tool.coverage.run]
 branch = true

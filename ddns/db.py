@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy import String, MetaData, create_engine, select, update
+from sqlalchemy import String, MetaData, create_engine, select, Integer
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
 
 from datetime import datetime
@@ -7,6 +7,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from . import exceptions
+from . import utils
 
 import os
 import logging
@@ -26,7 +27,15 @@ class DDNS(Base):
     __tablename__ = 'ddns'
 
     dns_record: Mapped[str] = mapped_column(String(200), primary_key=True)
-    api_token: Mapped[str] = mapped_column(String(32), nullable=False, unique=True)
+    identifier_token: Mapped[int] = mapped_column(
+        String(utils.IDENTIFIER_TOKEN_LENGTH), 
+        nullable=False, 
+        unique=True
+    )
+    secret_token: Mapped[str] = mapped_column(
+        String(utils.SECRET_TOKEN_LENGTH), 
+        nullable=False
+    )
     ip_address: Mapped[str] = mapped_column(String(100), default='')
     created: Mapped[datetime] = mapped_column(default=datetime.now())
     last_updated: Mapped[datetime] = mapped_column(
@@ -57,11 +66,13 @@ class DataHandler(metaclass=SingletonMeta):
     def __open_session(self) -> Session:
         return Session(self.__engine)
     
-    def api_token_exists(self, api_token: str) -> bool:
+    def identifier_token_exists(self, api_token: str) -> bool:
+        identifier_token, secret_token = utils.unpack_api_token(api_token)
+
         with self.__open_session() as session:
             query = session.query(
-                DDNS.api_token
-            ).filter(DDNS.api_token == api_token)
+                DDNS.identifier_token
+            ).filter(DDNS.identifier_token == identifier_token)
 
             return session.query(query.exists()).scalar()
     
@@ -73,21 +84,34 @@ class DataHandler(metaclass=SingletonMeta):
 
             return session.query(query.exists()).scalar()
 
-    def create_new_record(self, dns_record: str, api_token=str(uuid4())) -> str:
+    def create_new_record(
+            self, 
+            dns_record: str, 
+            api_token=None
+    ) -> str:
+        if not api_token:
+            api_token = utils.generate_full_token_pair()
+        
+        logging.debug(f'create_new_record(dns_record="{dns_record}", api_token="{api_token}")')
+
+        identifier_token, secret_token = utils.unpack_api_token(api_token)
+        hashed_secret_token = utils.hash_token(secret_token)
+
         if self.dns_record_exists(dns_record):
             raise exceptions.DNSRecordAlreadyExistsError(
                 f'DNS record "{dns_record}" already exists.'
             )
         
-        if self.api_token_exists(api_token):
-            raise exceptions.APITokenAlreadyExistsError(
-                f'API token "{api_token}" already taken.'
+        if self.identifier_token_exists(api_token):
+            raise exceptions.IdentifierTokenAlreadyExistsError(
+                f'Identifier token "{identifier_token}" already taken.'
             )
         
         with self.__open_session() as session:
             ddns = DDNS(
                 dns_record=dns_record,
-                api_token=api_token
+                identifier_token=identifier_token,
+                secret_token=hashed_secret_token
             )
 
             session.add(ddns)
@@ -106,21 +130,31 @@ class DataHandler(metaclass=SingletonMeta):
             return session.scalar(statement)
     
     def update_record(self, api_token: str, ip_address: str):
-        if not self.api_token_exists(api_token):
-            raise exceptions.APITokenNotFoundError(
-                f'API token "{api_token}" doesn\'t exist.'
+        identifier_token, secret_token = utils.unpack_api_token(api_token)
+
+        if not self.identifier_token_exists(api_token):
+            raise exceptions.IdentifierTokenNotFoundError(
+                f'Identifier token "{identifier_token}" doesn\'t exist.'
             )
         
         with self.__open_session() as session:
             ddns_data = session.execute(
                 select(DDNS).
-                filter_by(api_token=api_token)
+                filter_by(identifier_token=identifier_token)
             ).scalar_one()
 
-            ddns_data.ip_address = ip_address
-            ddns_data.last_updated = datetime.now()
+            if utils.check_hashed_token(
+                token=secret_token,
+                hashed_token=ddns_data.secret_token
+            ):
+                ddns_data.ip_address = ip_address
+                ddns_data.last_updated = datetime.now()
 
-            session.commit()
+                session.commit()
+            else:
+                raise exceptions.SecretTokenIncorrectError(
+                    f'Token pair "{api_token}" incorrect.'
+                )
 
 
 

@@ -2,9 +2,13 @@ class DNSRecordAlreadyExistsError(Exception):
     pass
 
 
-class APITokenAlreadyExistsError(Exception):
+class IdentifierTokenAlreadyExistsError(Exception):
     pass
 
 
-class APITokenNotFoundError(Exception):
+class IdentifierTokenNotFoundError(Exception):
+    pass
+
+
+class SecretTokenIncorrectError(Exception):
     pass

@@ -27,7 +27,7 @@ def update():
     
     try:
         database.update_record(api_token, ip_addr)
-    except exceptions.APITokenNotFoundError as e:
+    except exceptions.IdentifierTokenNotFoundError as e:
         logging.error(f'/record/update [{request.method}]: {str(e)}')
 
         return Response('API token not authorized.', status=401)
