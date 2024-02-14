@@ -143,7 +143,7 @@ class DataHandler(metaclass=SingletonMeta):
                 filter_by(identifier_token=identifier_token)
             ).scalar_one()
 
-            if utils.check_hashed_token(
+            if utils.compare_hashed_token(
                 token=secret_token,
                 hashed_token=ddns_data.secret_token
             ):

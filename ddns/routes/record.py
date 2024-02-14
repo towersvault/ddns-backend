@@ -31,6 +31,10 @@ def update():
         logging.error(f'/record/update [{request.method}]: {str(e)}')
 
         return Response('API token not authorized.', status=401)
+    except exceptions.SecretTokenIncorrectError as e:
+        logging.error(f'/record/update [{request.method}]: {str(e)}')
+
+        return Response('API token not authorized.', status=401)
 
     return Response(status=200)
 

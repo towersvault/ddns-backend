@@ -3,6 +3,7 @@ import string
 import base64
 import bcrypt
 import logging
+import hashlib
 
 
 IDENTIFIER_TOKEN_LENGTH = 16
@@ -31,15 +32,21 @@ def generate_full_token_pair(
     return f'{identifier}-{secret}'
 
 
+def b64_encode(token: str) -> bytes:
+    return base64.b64encode(
+        hashlib.sha256(token.encode('utf-8')).digest()
+    )
+
+
 def hash_token(token: str) -> str:
-    token_encoded = base64.b64encode(token.encode('utf-8'))
+    token_encoded = b64_encode(token)
     salt = bcrypt.gensalt()
     hash = bcrypt.hashpw(token_encoded, salt)
     return hash.decode('utf-8')
 
 
-def check_hashed_token(token: str, hashed_token: str) -> bool:
-    token_encoded = token.encode('utf-8')
+def compare_hashed_token(token: str, hashed_token: str) -> bool:
+    token_encoded = b64_encode(token)
     hashed_encoded = hashed_token.encode('utf-8')
 
     logging.debug(f'check_hashed_token: {token}, {hashed_token}, check={bcrypt.checkpw(token_encoded, hashed_encoded)}')
