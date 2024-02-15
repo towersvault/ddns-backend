@@ -1,9 +1,16 @@
+from typing import Iterator
 from flask import current_app
 from uuid import uuid4
 
 from ddns import create_app
 from ddns import utils
 from ddns.db import DataHandler
+
+from click.testing import CliRunner
+from click.testing import Result
+from click import BaseCommand
+
+from pytest import CaptureFixture
 
 import pytest
 import os
@@ -37,9 +44,20 @@ def client(app):
     return app.test_client()
 
 
-@pytest.fixture()
-def runner(app):
-    return app.test_cli_runner()
+# @pytest.fixture()
+# def runner(app):
+#     return app.test_cli_runner()
+
+
+@pytest.fixture
+def runner(capsys: CaptureFixture[str]) -> Iterator[CliRunner]:
+    class TestCliRunner(CliRunner):
+        def invoke(self, *args, **kwargs) -> Result:
+            with capsys.disabled():
+                result = super().invoke(cli=BaseCommand(name='flask'), *args, **kwargs)
+            return result
+    
+    yield TestCliRunner()
 
 
 def create_test_record():

@@ -54,7 +54,7 @@ def create_cli(subdomain: str):
     full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
 
     if database.dns_record_exists(full_dns_record):
-        print(f'DNS record "{full_dns_record}" already exists.')
+        click.echo(f'DNS record "{full_dns_record}" already exists.')
         return
     
     api_token = utils.generate_full_token_pair()
@@ -63,5 +63,5 @@ def create_cli(subdomain: str):
         api_token=api_token
     )
 
-    print(f'DNS record "{full_dns_record}" created!')
-    print(f'API token: {api_token}')
+    click.echo(f'DNS record "{full_dns_record}" created!')
+    click.echo(f'API token: {api_token}')

@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from .conftest import TEST_DATA
 
 from ddns import utils
