@@ -2,8 +2,11 @@ from flask import Blueprint, jsonify, request, Response, current_app
 
 from ddns.db import DataHandler
 from ddns import exceptions
+from ddns import utils
 
+import click
 import logging
+import os
 
 
 blueprint = Blueprint('record', __name__, url_prefix='/record')
@@ -44,6 +47,21 @@ def get():
     pass
 
 
-@blueprint.route('/create', methods=['POST'])
-def create():
-    pass
+@blueprint.cli.command('create-dns')
+@click.argument('subdomain')
+def create_cli(subdomain: str):
+    database = DataHandler(current_app.config['DATABASE'])
+    full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
+
+    if database.dns_record_exists(full_dns_record):
+        print(f'DNS record "{full_dns_record}" already exists.')
+        return
+    
+    api_token = utils.generate_full_token_pair()
+    database.create_new_record(
+        dns_record=full_dns_record,
+        api_token=api_token
+    )
+
+    print(f'DNS record "{full_dns_record}" created!')
+    print(f'API token: {api_token}')
