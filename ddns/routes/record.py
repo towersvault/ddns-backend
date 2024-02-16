@@ -47,14 +47,18 @@ def get():
     pass
 
 
-@blueprint.cli.command('create-dns')
+@blueprint.cli.command('create')
 @click.argument('subdomain')
 def create_cli(subdomain: str):
     database = DataHandler(current_app.config['DATABASE'])
     full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
 
+    echo_title = 'DNS Record Creation'
+
     if database.dns_record_exists(full_dns_record):
-        click.echo(f'DNS record "{full_dns_record}" already exists.')
+        click.echo((f'{echo_title}\n'
+                    f'{"-" * len(echo_title)}\n'
+                    f'DNS record "{full_dns_record}" already exists.\n'))
         return
     
     api_token = utils.generate_full_token_pair()
@@ -63,5 +67,33 @@ def create_cli(subdomain: str):
         api_token=api_token
     )
 
-    click.echo(f'DNS record "{full_dns_record}" created!')
-    click.echo(f'API token: {api_token}')
+    click.echo((f'{echo_title}\n'
+                f'{"-" * len(echo_title)}\n'
+                f'DNS Record: {full_dns_record}\n'
+                f'API token: {api_token}\n'))
+
+
+@blueprint.cli.command('get')
+@click.argument('subdomain')
+def get_cli(subdomain: str):
+    database = DataHandler(current_app.config['DATABASE'])
+    full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
+
+    echo_title = 'DNS Record Information'
+
+    if not database.dns_record_exists(full_dns_record):
+        click.echo((f'{echo_title}\n'
+                    f'{"-" * len(echo_title)}\n'
+                    f'DNS records "{full_dns_record}" doesn\'t exist.\n'))
+    
+    dns = database.get_record_data(
+        dns_record=full_dns_record
+    )
+
+    click.echo((f'{echo_title}\n'
+                f'{"-" * len(echo_title)}\n'
+                f'DNS Record: {full_dns_record}\n'
+                f'Identifier API Token: {dns.identifier_token}\n'
+                f'IP Address: {dns.ip_address}\n'
+                f'Last Updated: {dns.last_updated}\n'
+                f'Created: {dns.created}\n'))
