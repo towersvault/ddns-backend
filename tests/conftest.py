@@ -20,10 +20,15 @@ TEST_DATA = {
     'api_token': utils.generate_full_token_pair()
 }
 
+TEST_DB = 'ddns-test-db'
+
 
 @pytest.fixture(scope='session', autouse=True)
 def app():
     app = create_app(test_config=True)
+
+    global TEST_DB
+    TEST_DB = app.config['DATABASE']
 
     # Setup
     global database
@@ -33,9 +38,9 @@ def app():
     yield app
 
     # Teardown
-    # print(f'Tearing down {os.path.basename(__file__)}')
-    # if os.path.exists(f'{app.config["DATABASE"]}.sqlite'):
-    #     os.remove(f'{app.config["DATABASE"]}.sqlite')
+    print(f'Tearing down {os.path.basename(__file__)}')
+    if os.path.exists(f'{app.config["DATABASE"]}.sqlite'):
+        os.remove(f'{app.config["DATABASE"]}.sqlite')
 
 
 @pytest.fixture()

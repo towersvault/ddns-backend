@@ -1,4 +1,4 @@
-from .conftest import TEST_DATA
+from tests.conftest import TEST_DATA
 
 from ddns import utils
 
