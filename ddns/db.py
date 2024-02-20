@@ -26,7 +26,7 @@ class Base(DeclarativeBase):
 class DDNS(Base):
     __tablename__ = 'ddns'
 
-    dns_record: Mapped[str] = mapped_column(String(200), primary_key=True)
+    subdomain_record: Mapped[str] = mapped_column(String(200), primary_key=True)
     identifier_token: Mapped[int] = mapped_column(
         String(utils.IDENTIFIER_TOKEN_LENGTH), 
         nullable=False, 
@@ -43,7 +43,7 @@ class DDNS(Base):
     )
 
     def __repr__(self) -> str:
-        return f'DDNS(dns_record={self.dns_record!r}, ip_address={self.ip_address!r})'
+        return f'DDNS(subdomain={self.subdomain_record!r}, ip_address={self.ip_address!r})'
 
 
 class SingletonMeta(type):
@@ -76,30 +76,31 @@ class DataHandler(metaclass=SingletonMeta):
 
             return session.query(query.exists()).scalar()
     
-    def dns_record_exists(self, dns_record: str) -> bool:
+    def subdomain_record_exists(self, subdomain_record: str) -> bool:
         with self.__open_session() as session:
             query = session.query(
-                DDNS.dns_record
-            ).filter(DDNS.dns_record == dns_record)
+                DDNS.subdomain_record
+            ).filter(DDNS.subdomain_record == subdomain_record)
 
             return session.query(query.exists()).scalar()
 
     def create_new_record(
             self, 
-            dns_record: str, 
+            subdomain_record: str, 
             api_token=None
     ) -> str:
         if not api_token:
             api_token = utils.generate_full_token_pair()
         
-        logging.debug(f'create_new_record(dns_record="{dns_record}", api_token="{api_token}")')
+        logging.debug(f'create_new_record(dns_record="{subdomain_record}", api_token="{api_token}")')
 
         identifier_token, secret_token = utils.unpack_api_token(api_token)
         hashed_secret_token = utils.hash_token(secret_token)
 
-        if self.dns_record_exists(dns_record):
+        if self.subdomain_record_exists(subdomain_record):
+            full_domain_name = f'{subdomain_record}.{os.getenv("DOMAIN_NAME")}'
             raise exceptions.DNSRecordAlreadyExistsError(
-                f'DNS record "{dns_record}" already exists.'
+                f'DNS record "{full_domain_name}" already exists.'
             )
         
         if self.identifier_token_exists(api_token):
@@ -109,7 +110,7 @@ class DataHandler(metaclass=SingletonMeta):
         
         with self.__open_session() as session:
             ddns = DDNS(
-                dns_record=dns_record,
+                subdomain_record=subdomain_record,
                 identifier_token=identifier_token,
                 secret_token=hashed_secret_token
             )
@@ -119,7 +120,7 @@ class DataHandler(metaclass=SingletonMeta):
 
             return api_token
         
-    def get_bound_dns_record(self, api_token: str) -> str:
+    def get_bound_subdomain_record(self, api_token: str) -> str:
         identifier_token, secret_token = utils.unpack_api_token(api_token)
 
         if not self.identifier_token_exists(api_token):
@@ -137,31 +138,32 @@ class DataHandler(metaclass=SingletonMeta):
                 token=secret_token,
                 hashed_token=ddns_data.secret_token
             ):
-                return ddns_data.dns_record
+                return ddns_data.subdomain_record
             else:
                 raise exceptions.SecretTokenIncorrectError(
                     f'Token pair "{api_token}" incorrect.'
                 )
         
-    def get_record_data(self, dns_record: str) -> DDNS:
+    def get_record_data(self, subdomain_record: str) -> DDNS:
         with self.__open_session() as session:
             ddns_data = session.execute(
                 select(DDNS)
-                .filter_by(dns_record=dns_record)
+                .filter_by(subdomain_record=subdomain_record)
             ).scalar_one()
 
             return ddns_data
     
-    def update_record_ip_address(self, dns_record: str, ip_address: str):
-        if not self.dns_record_exists(dns_record):
+    def update_record_ip_address(self, subdomain_record: str, ip_address: str):
+        if not self.subdomain_record_exists(subdomain_record):
+            full_domain_name = f'{subdomain_record}.{os.getenv("DOMAIN_NAME")}'
             raise exceptions.DNSRecordNotFoundError(
-                f'DNS record "{dns_record}" doesn\'t exist.'
+                f'DNS record "{full_domain_name}" doesn\'t exist.'
             )
         
         with self.__open_session() as session:
             ddns_data = session.execute(
                 select(DDNS).
-                filter_by(dns_record=dns_record)
+                filter_by(subdomain_record=subdomain_record)
             ).scalar_one()
 
             ddns_data.ip_address = ip_address
@@ -169,22 +171,23 @@ class DataHandler(metaclass=SingletonMeta):
 
             session.commit()
 
-    def update_record_api_token(self, dns_record: str, new_api_token=None) -> str:
+    def update_record_api_token(self, subdomain_record: str, new_api_token=None) -> str:
         if not new_api_token:
             new_api_token = utils.generate_full_token_pair()
         
         identifier_token, secret_token = utils.unpack_api_token(new_api_token)
         hashed_secret_token = utils.hash_token(secret_token)
 
-        if not self.dns_record_exists(dns_record):
+        if not self.subdomain_record_exists(subdomain_record):
+            full_domain_name = f'{subdomain_record}.{os.getenv("DOMAIN_NAME")}'
             raise exceptions.DNSRecordNotFoundError(
-                f'DNS record "{dns_record}" doesn\'t exist.'
+                f'DNS record "{full_domain_name}" doesn\'t exist.'
             )
         
         with self.__open_session() as session:
             ddns_data = session.execute(
                 select(DDNS).
-                filter_by(dns_record=dns_record)
+                filter_by(subdomain_record=subdomain_record)
             ).scalar_one()
 
             ddns_data.identifier_token = identifier_token

@@ -12,7 +12,7 @@ def database():
     return DataHandler(TestingConfig.DATABASE)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def test_data():
     return {
         'subdomain_record': f'test-{uuid4()}',

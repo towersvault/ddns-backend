@@ -29,7 +29,7 @@ def update():
     logging.info(f'Update DNS for TOKEN:{api_token} to IP:{ip_addr}')
     
     try:
-        dns_record = database.get_bound_dns_record(api_token)
+        dns_record = database.get_bound_subdomain_record(api_token)
         database.update_record_ip_address(dns_record, ip_addr)
     except exceptions.IdentifierTokenNotFoundError as e:
         logging.error(f'/record/update [{request.method}]: {str(e)}')
@@ -52,11 +52,11 @@ def get():
 @click.argument('subdomain')
 def create_cli(subdomain: str):
     database = DataHandler(current_app.config['DATABASE'])
-    full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
 
     echo_title = 'DNS Record - Creation'
+    full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
 
-    if database.dns_record_exists(full_dns_record):
+    if database.subdomain_record_exists(subdomain_record=subdomain):
         click.echo((f'{echo_title}\n'
                     f'{"-" * len(echo_title)}\n'
                     f'DNS record "{full_dns_record}" already exists.\n'))
@@ -64,7 +64,7 @@ def create_cli(subdomain: str):
     
     api_token = utils.generate_full_token_pair()
     database.create_new_record(
-        dns_record=full_dns_record,
+        subdomain_record=subdomain,
         api_token=api_token
     )
 
@@ -78,18 +78,18 @@ def create_cli(subdomain: str):
 @click.argument('subdomain')
 def get_cli(subdomain: str):
     database = DataHandler(current_app.config['DATABASE'])
-    full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
 
     echo_title = 'DNS Record - Information'
+    full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
 
-    if not database.dns_record_exists(full_dns_record):
+    if not database.subdomain_record_exists(subdomain_record=subdomain):
         click.echo((f'{echo_title}\n'
                     f'{"-" * len(echo_title)}\n'
                     f'DNS record "{full_dns_record}" doesn\'t exist.\n'))
         return
     
     dns = database.get_record_data(
-        dns_record=full_dns_record
+        subdomain_record=subdomain
     )
 
     click.echo((f'{echo_title}\n'
@@ -105,11 +105,11 @@ def get_cli(subdomain: str):
 @click.argument('subdomain')
 def reset_api_token_cli(subdomain: str):
     database = DataHandler(current_app.config['DATABASE'])
-    full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
 
     echo_title = 'DNS Record - API Token Reset'
+    full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
 
-    if not database.dns_record_exists(full_dns_record):
+    if not database.subdomain_record_exists(subdomain_record=subdomain):
         click.echo((f'{echo_title}\n'
                     f'{"-" * len(echo_title)}'
                     f'DNS record "{full_dns_record}" doesn\'t exist.\n'))
@@ -117,7 +117,7 @@ def reset_api_token_cli(subdomain: str):
     
     api_token = utils.generate_full_token_pair()
     database.update_record_api_token(
-        dns_record=full_dns_record,
+        subdomain_record=subdomain,
         new_api_token=api_token
     )
 
@@ -133,18 +133,18 @@ def reset_api_token_cli(subdomain: str):
 @click.argument('new-ip-address')
 def set_ip_cli(subdomain, new_ip_address):
     database = DataHandler(current_app.config['DATABASE'])
-    full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
 
     echo_title = 'DNS Record - Set IP Address'
+    full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
 
-    if not database.dns_record_exists(full_dns_record):
+    if not database.subdomain_record_exists(subdomain_record=subdomain):
         click.echo((f'{echo_title}\n'
                     f'{"-" * len(echo_title)}'
                     f'DNS record "{full_dns_record}" doesn\'t exist.\n'))
         return
     
     database.update_record_ip_address(
-        dns_record=full_dns_record,
+        subdomain_record=subdomain,
         ip_address=new_ip_address
     )
 
