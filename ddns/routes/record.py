@@ -22,15 +22,16 @@ def update():
     else:
         api_token = request.args.get('api_token')
 
-    database = DataHandler(current_app.config['DATABASE'])
+    database = DataHandler(database_name=current_app.config['DATABASE'])
 
     ip_addr = request.remote_addr
 
     logging.info(f'Update DNS for TOKEN:{api_token} to IP:{ip_addr}')
     
     try:
-        dns_record = database.get_bound_subdomain_record(api_token)
-        database.update_record_ip_address(dns_record, ip_addr)
+        subdomain_record = database.get_bound_subdomain_record(api_token=api_token)
+        database.update_record_ip_address(subdomain_record=subdomain_record,
+                                          ip_address=ip_addr)
     except exceptions.IdentifierTokenNotFoundError as e:
         logging.error(f'/record/update [{request.method}]: {str(e)}')
 
@@ -51,7 +52,7 @@ def get():
 @blueprint.cli.command('create')
 @click.argument('subdomain')
 def create_cli(subdomain: str):
-    database = DataHandler(current_app.config['DATABASE'])
+    database = DataHandler(database_name=current_app.config['DATABASE'])
 
     echo_title = 'DNS Record - Creation'
     full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
@@ -63,10 +64,8 @@ def create_cli(subdomain: str):
         return
     
     api_token = utils.generate_full_token_pair()
-    database.create_new_record(
-        subdomain_record=subdomain,
-        api_token=api_token
-    )
+    database.create_new_record(subdomain_record=subdomain, 
+                               api_token=api_token)
 
     click.echo((f'{echo_title}\n'
                 f'{"-" * len(echo_title)}\n'
@@ -77,7 +76,7 @@ def create_cli(subdomain: str):
 @blueprint.cli.command('get')
 @click.argument('subdomain')
 def get_cli(subdomain: str):
-    database = DataHandler(current_app.config['DATABASE'])
+    database = DataHandler(database_name=current_app.config['DATABASE'])
 
     echo_title = 'DNS Record - Information'
     full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
@@ -88,23 +87,21 @@ def get_cli(subdomain: str):
                     f'DNS record "{full_dns_record}" doesn\'t exist.\n'))
         return
     
-    dns = database.get_record_data(
-        subdomain_record=subdomain
-    )
+    ddns_record = database.get_record_data(subdomain_record=subdomain)
 
     click.echo((f'{echo_title}\n'
                 f'{"-" * len(echo_title)}\n'
                 f'DNS Record: {full_dns_record}\n'
-                f'Identifier API Token: {dns.identifier_token}\n'
-                f'IP Address: {dns.ip_address}\n'
-                f'Last Updated: {dns.last_updated}\n'
-                f'Created: {dns.created}\n'))
+                f'Identifier API Token: {ddns_record.identifier_token}\n'
+                f'IP Address: {ddns_record.ip_address}\n'
+                f'Last Updated: {ddns_record.last_updated}\n'
+                f'Created: {ddns_record.created}\n'))
     
 
 @blueprint.cli.command('reset-api-token')
 @click.argument('subdomain')
 def reset_api_token_cli(subdomain: str):
-    database = DataHandler(current_app.config['DATABASE'])
+    database = DataHandler(database_name=current_app.config['DATABASE'])
 
     echo_title = 'DNS Record - API Token Reset'
     full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
@@ -116,10 +113,8 @@ def reset_api_token_cli(subdomain: str):
         return
     
     api_token = utils.generate_full_token_pair()
-    database.update_record_api_token(
-        subdomain_record=subdomain,
-        new_api_token=api_token
-    )
+    database.update_record_api_token(subdomain_record=subdomain, 
+                                     new_api_token=api_token)
 
     click.echo((f'{echo_title}\n'
                 f'{"-" * len(echo_title)}\n'
@@ -132,7 +127,7 @@ def reset_api_token_cli(subdomain: str):
 @click.argument('subdomain')
 @click.argument('new-ip-address')
 def set_ip_cli(subdomain, new_ip_address):
-    database = DataHandler(current_app.config['DATABASE'])
+    database = DataHandler(database_name=current_app.config['DATABASE'])
 
     echo_title = 'DNS Record - Set IP Address'
     full_dns_record = f'{subdomain}.{os.getenv("DOMAIN_NAME")}'
@@ -143,10 +138,8 @@ def set_ip_cli(subdomain, new_ip_address):
                     f'DNS record "{full_dns_record}" doesn\'t exist.\n'))
         return
     
-    database.update_record_ip_address(
-        subdomain_record=subdomain,
-        ip_address=new_ip_address
-    )
+    database.update_record_ip_address(subdomain_record=subdomain, 
+                                      ip_address=new_ip_address)
 
     click.echo((f'{echo_title}\n'
                 f'{"-" * len(echo_title)}\n'

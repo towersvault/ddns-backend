@@ -24,10 +24,8 @@ def test_record_create(runner,
 def test_record_get(runner, 
                     database: DataHandler,
                     test_data: list):
-    database.create_new_record(
-        subdomain_record=test_data['subdomain_record'],
-        api_token=test_data['api_token']
-    )
+    database.create_new_record(subdomain_record=test_data['subdomain_record'], 
+                               api_token=test_data['api_token'])
 
     # Finds an existing DNS record
     result_pass = runner.invoke(args=['record', 
@@ -49,10 +47,8 @@ def test_record_get(runner,
 def test_record_reset_api_token(runner, 
                                 database: DataHandler, 
                                 test_data: list):
-    database.create_new_record(
-        subdomain_record=test_data['subdomain_record'],
-        api_token=test_data['api_token']
-    )
+    database.create_new_record(subdomain_record=test_data['subdomain_record'], 
+                               api_token=test_data['api_token'])
 
     # Updates an existing DNS record
     result_pass = runner.invoke(args=['record',
@@ -74,10 +70,8 @@ def test_record_reset_api_token(runner,
 def test_record_set_ip_address(runner, 
                                database: DataHandler, 
                                test_data: list):
-    database.create_new_record(
-        subdomain_record=test_data['subdomain_record'],
-        api_token=test_data['api_token']
-    )
+    database.create_new_record(subdomain_record=test_data['subdomain_record'], 
+                               api_token=test_data['api_token'])
 
     # Updates an existing DNS record
     result_pass = runner.invoke(args=['record',

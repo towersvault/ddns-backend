@@ -21,11 +21,6 @@ def app():
 
     yield app
 
-    # Teardown
-    # print(f'Tearing down {os.path.basename(__file__)}')
-    # if os.path.exists(f'{app.config["DATABASE"]}.sqlite'):
-    #     os.remove(f'{app.config["DATABASE"]}.sqlite')
-
 
 @pytest.fixture()
 def client(app):
