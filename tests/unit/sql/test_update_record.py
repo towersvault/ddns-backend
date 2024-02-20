@@ -1,7 +1,6 @@
 from ddns import utils
 from ddns.db import DataHandler
-from ddns.exceptions import IdentifierTokenNotFoundError
-from ddns.exceptions import SecretTokenIncorrectError
+from ddns.exceptions import DNSRecordNotFoundError
 
 from uuid import uuid4
 
@@ -46,8 +45,8 @@ def create_test_record():
 
 
 def test_update_record():
-    database.update_record(
-        api_token=TEST_DATA['api_token'],
+    database.update_record_ip_address(
+        dns_record=TEST_DATA['dns_record'],
         ip_address=TEST_IP
     )
 
@@ -56,20 +55,32 @@ def test_update_record():
     assert data.ip_address == TEST_IP
 
 
-def test_update_record_wrong_identifier_token():
-    with pytest.raises(IdentifierTokenNotFoundError):
-        database.update_record(
-            api_token=utils.generate_full_token_pair(),
+def test_update_record_wrong_dns_record():
+    with pytest.raises(DNSRecordNotFoundError):
+        database.update_record_ip_address(
+            dns_record=f'test.{str(uuid4())}.softwxre.io',
             ip_address=TEST_IP
         )
 
 
-def test_update_record_wrong_secret_token():
-    identifier_token, secret_token = utils.unpack_api_token(TEST_DATA['api_token'])
-    test_api_token = utils.generate_full_token_pair(identifier=identifier_token)
+def test_update_record_new_api_token():
+    new_api_token = database.update_record_api_token(TEST_DATA['dns_record'])
 
-    with pytest.raises(SecretTokenIncorrectError):
-        database.update_record(
-            api_token=test_api_token,
-            ip_address=TEST_IP
+    test_api_token = utils.generate_full_token_pair()
+    return_api_token = database.update_record_api_token(
+        dns_record=TEST_DATA['dns_record'],
+        new_api_token=test_api_token
+    )
+
+    assert len(new_api_token) == utils.TOTAL_TOKEN_LENGTH
+    assert test_api_token == return_api_token
+
+
+def test_update_record_new_api_token_incorrect_dns():
+    with pytest.raises(DNSRecordNotFoundError):
+        database.update_record_api_token(
+            dns_record=f'test.{str(uuid4())}.softwxre.io'
         )
+    
+
+

@@ -119,43 +119,79 @@ class DataHandler(metaclass=SingletonMeta):
 
             return api_token
         
-    def get_record_data(self, dns_record: str) -> DDNS:
-        with self.__open_session() as session:
-            statement = select(
-                DDNS
-            ).where(
-                DDNS.dns_record == dns_record
-            )
-
-            return session.scalar(statement)
-    
-    def update_record(self, api_token: str, ip_address: str):
+    def get_bound_dns_record(self, api_token: str) -> str:
         identifier_token, secret_token = utils.unpack_api_token(api_token)
 
         if not self.identifier_token_exists(api_token):
             raise exceptions.IdentifierTokenNotFoundError(
                 f'Identifier token "{identifier_token}" doesn\'t exist.'
             )
-        
+
         with self.__open_session() as session:
             ddns_data = session.execute(
-                select(DDNS).
-                filter_by(identifier_token=identifier_token)
+                select(DDNS)
+                .filter_by(identifier_token=identifier_token)
             ).scalar_one()
 
             if utils.compare_hashed_token(
                 token=secret_token,
                 hashed_token=ddns_data.secret_token
             ):
-                ddns_data.ip_address = ip_address
-                ddns_data.last_updated = datetime.now()
-
-                session.commit()
+                return ddns_data.dns_record
             else:
                 raise exceptions.SecretTokenIncorrectError(
                     f'Token pair "{api_token}" incorrect.'
                 )
+        
+    def get_record_data(self, dns_record: str) -> DDNS:
+        with self.__open_session() as session:
+            ddns_data = session.execute(
+                select(DDNS)
+                .filter_by(dns_record=dns_record)
+            ).scalar_one()
 
+            return ddns_data
+    
+    def update_record_ip_address(self, dns_record: str, ip_address: str):
+        if not self.dns_record_exists(dns_record):
+            raise exceptions.DNSRecordNotFoundError(
+                f'DNS record "{dns_record}" doesn\'t exist.'
+            )
+        
+        with self.__open_session() as session:
+            ddns_data = session.execute(
+                select(DDNS).
+                filter_by(dns_record=dns_record)
+            ).scalar_one()
 
+            ddns_data.ip_address = ip_address
+            ddns_data.last_updated = datetime.now()
 
+            session.commit()
+
+    def update_record_api_token(self, dns_record: str, new_api_token=None) -> str:
+        if not new_api_token:
+            new_api_token = utils.generate_full_token_pair()
+        
+        identifier_token, secret_token = utils.unpack_api_token(new_api_token)
+        hashed_secret_token = utils.hash_token(secret_token)
+
+        if not self.dns_record_exists(dns_record):
+            raise exceptions.DNSRecordNotFoundError(
+                f'DNS record "{dns_record}" doesn\'t exist.'
+            )
+        
+        with self.__open_session() as session:
+            ddns_data = session.execute(
+                select(DDNS).
+                filter_by(dns_record=dns_record)
+            ).scalar_one()
+
+            ddns_data.identifier_token = identifier_token
+            ddns_data.secret_token = hashed_secret_token
+            ddns_data.last_updated = datetime.now()
+
+            session.commit()
+        
+        return new_api_token
         

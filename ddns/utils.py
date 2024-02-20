@@ -8,6 +8,7 @@ import hashlib
 
 IDENTIFIER_TOKEN_LENGTH = 16
 SECRET_TOKEN_LENGTH = 32
+TOTAL_TOKEN_LENGTH = 16 + 32 + 1
 ALPHABET = string.ascii_lowercase + string.digits
 
 

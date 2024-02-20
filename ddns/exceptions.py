@@ -2,6 +2,10 @@ class DNSRecordAlreadyExistsError(Exception):
     pass
 
 
+class DNSRecordNotFoundError(Exception):
+    pass
+
+
 class IdentifierTokenAlreadyExistsError(Exception):
     pass
 
