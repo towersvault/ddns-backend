@@ -11,8 +11,11 @@ from click.testing import Result
 from pytest import CaptureFixture
 
 from flask.testing import FlaskCliRunner
+from flask.testing import FlaskClient
 
 import pytest
+import time
+import logging
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -24,7 +27,54 @@ def app():
 
 @pytest.fixture()
 def client(app):
+    """Non-rate limited client.
+
+    Use is intended for testing flask-limiter.
+    """
+
     return app.test_client()
+
+
+@pytest.fixture()
+def ratelimit_client(app):
+    """Rate limited client to not trigger flask-limiter."""
+
+    class TestFlaskClient(FlaskClient):
+        def get(self, *args, **kwargs) -> Result:
+            """Overidden FlaskClient.get
+
+            Handles getting rate limited (HTTP-Error 429) gracefully by waiting
+            then retrying.
+            """
+
+            result = super().get(*args, **kwargs)
+            while result.status_code == 429:
+                logging.debug(
+                    'FlaskClient-GET rate limited, sleeping for 5 seconds.')
+
+                time.sleep(5)
+                result = super().get(*args, **kwargs)
+
+            return result
+
+        def post(self, *args, **kwargs) -> Result:
+            """Overidden FlaskClient.post
+
+            Handles getting rate limited (HTTP-Error 429) gracefully by waiting
+            then retrying.
+            """
+
+            result = super().post(*args, **kwargs)
+            while result.status_code == 429:
+                logging.debug(
+                    'FlaskClient-POST rate limited, sleeping for 5 seconds.')
+
+                time.sleep(5)
+                result = super().post(*args, **kwargs)
+
+            return result
+
+    yield TestFlaskClient(app)
 
 
 @pytest.fixture

@@ -7,10 +7,10 @@ import logging
 
 def test_record_create(runner,
                        test_data: list):
-    result_pass = runner.invoke(args=['record',
+    result_pass = runner.invoke(args=['cli',
                                       'create',
                                       test_data['subdomain_record']])
-    result_fail = runner.invoke(args=['record',
+    result_fail = runner.invoke(args=['cli',
                                       'create',
                                       test_data['subdomain_record']])
 
@@ -28,12 +28,12 @@ def test_record_get(runner,
                                api_token=test_data['api_token'])
 
     # Finds an existing DNS record
-    result_pass = runner.invoke(args=['record',
+    result_pass = runner.invoke(args=['cli',
                                       'get',
                                       test_data['subdomain_record']])
 
     # Attempts to find a DNS record that doesn't exist
-    result_fail = runner.invoke(args=['record',
+    result_fail = runner.invoke(args=['cli',
                                       'get',
                                       str(uuid4())])
 
@@ -51,12 +51,12 @@ def test_record_reset_api_token(runner,
                                api_token=test_data['api_token'])
 
     # Updates an existing DNS record
-    result_pass = runner.invoke(args=['record',
+    result_pass = runner.invoke(args=['cli',
                                       'reset-api-token',
                                       test_data['subdomain_record']])
 
     # Tries to update a non-existent DNS record
-    result_fail = runner.invoke(args=['record',
+    result_fail = runner.invoke(args=['cli',
                                       'reset-api-token',
                                       str(uuid4())])
 
@@ -74,13 +74,13 @@ def test_record_set_ip_address(runner,
                                api_token=test_data['api_token'])
 
     # Updates an existing DNS record
-    result_pass = runner.invoke(args=['record',
+    result_pass = runner.invoke(args=['cli',
                                       'set-ip',
                                       test_data['subdomain_record'],
                                       '0.0.0.0'])
 
     # Tries to update a non-existent DNS record
-    result_fail = runner.invoke(args=['record',
+    result_fail = runner.invoke(args=['cli',
                                       'set-ip',
                                       str(uuid4()),
                                       '0.0.0.0'])
