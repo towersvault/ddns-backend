@@ -9,7 +9,7 @@ def cleanup(function):
             os.remove('test-ddns.sqlite')
         except FileNotFoundError:
             pass
-        
+
         return function(*args, **kwargs)
     return wrapper
 

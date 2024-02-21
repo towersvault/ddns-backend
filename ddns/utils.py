@@ -20,7 +20,7 @@ def generate_secret_token() -> str:
     return ''.join(random.choices(ALPHABET, k=SECRET_TOKEN_LENGTH))
 
 
-def generate_full_token_pair(identifier=None, 
+def generate_full_token_pair(identifier=None,
                              secret=None) -> str:
     if not identifier:
         identifier = generate_identifier_token()
@@ -44,12 +44,14 @@ def hash_token(token: str) -> str:
     return hash.decode('utf-8')
 
 
-def compare_hashed_token(token: str, 
+def compare_hashed_token(token: str,
                          hashed_token: str) -> bool:
     token_encoded = b64_encode(token)
     hashed_encoded = hashed_token.encode('utf-8')
 
-    logging.debug(f'check_hashed_token: {token}, {hashed_token}, check={bcrypt.checkpw(token_encoded, hashed_encoded)}')
+    logging.debug((f'check_hashed_token: {token}, '
+                   f'{hashed_token}, '
+                   f'check={bcrypt.checkpw(token_encoded, hashed_encoded)}'))
 
     return bcrypt.checkpw(token_encoded, hashed_encoded)
 

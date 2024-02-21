@@ -10,8 +10,8 @@ import logging
 
 
 logging.basicConfig(
-    filename='app.log', 
-    filemode='w', 
+    filename='app.log',
+    filemode='w',
     format='DDNS [%(levelname)s]: %(message)s',
     level=logging.INFO
 )
@@ -34,7 +34,7 @@ def create_app(test_config=False) -> Flask:
     else:
         # Load the test config if passed in
         app.config.from_object(config.TestingConfig)
-    
+
     # Ensure the instance folder exists
     try:
         os.makedirs(app.instance_path)

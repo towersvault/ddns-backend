@@ -34,7 +34,7 @@ def runner(app, capsys: CaptureFixture[str]):
             with capsys.disabled():
                 result = super().invoke(cli=self.app.cli, *args, **kwargs)
             return result
-    
+
     yield TestFlaskCliRunner(app)
 
 

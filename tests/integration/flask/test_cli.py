@@ -5,13 +5,13 @@ from ddns.db import DataHandler
 import logging
 
 
-def test_record_create(runner, 
+def test_record_create(runner,
                        test_data: list):
-    result_pass = runner.invoke(args=['record', 
-                                      'create', 
+    result_pass = runner.invoke(args=['record',
+                                      'create',
                                       test_data['subdomain_record']])
-    result_fail = runner.invoke(args=['record', 
-                                      'create', 
+    result_fail = runner.invoke(args=['record',
+                                      'create',
                                       test_data['subdomain_record']])
 
     logging.debug(f'Result Pass: {result_pass.output}')
@@ -21,20 +21,20 @@ def test_record_create(runner,
     assert 'already exists.' in result_fail.output
 
 
-def test_record_get(runner, 
+def test_record_get(runner,
                     database: DataHandler,
                     test_data: list):
-    database.create_new_record(subdomain_record=test_data['subdomain_record'], 
+    database.create_new_record(subdomain_record=test_data['subdomain_record'],
                                api_token=test_data['api_token'])
 
     # Finds an existing DNS record
-    result_pass = runner.invoke(args=['record', 
-                                      'get', 
+    result_pass = runner.invoke(args=['record',
+                                      'get',
                                       test_data['subdomain_record']])
 
     # Attempts to find a DNS record that doesn't exist
-    result_fail = runner.invoke(args=['record', 
-                                      'get', 
+    result_fail = runner.invoke(args=['record',
+                                      'get',
                                       str(uuid4())])
 
     logging.debug(f'Result Pass: {result_pass.output}')
@@ -44,17 +44,17 @@ def test_record_get(runner,
     assert 'doesn\'t exist.' in result_fail.output
 
 
-def test_record_reset_api_token(runner, 
-                                database: DataHandler, 
+def test_record_reset_api_token(runner,
+                                database: DataHandler,
                                 test_data: list):
-    database.create_new_record(subdomain_record=test_data['subdomain_record'], 
+    database.create_new_record(subdomain_record=test_data['subdomain_record'],
                                api_token=test_data['api_token'])
 
     # Updates an existing DNS record
     result_pass = runner.invoke(args=['record',
                                       'reset-api-token',
                                       test_data['subdomain_record']])
-    
+
     # Tries to update a non-existent DNS record
     result_fail = runner.invoke(args=['record',
                                       'reset-api-token',
@@ -67,10 +67,10 @@ def test_record_reset_api_token(runner,
     assert 'doesn\'t exist.' in result_fail.output
 
 
-def test_record_set_ip_address(runner, 
-                               database: DataHandler, 
+def test_record_set_ip_address(runner,
+                               database: DataHandler,
                                test_data: list):
-    database.create_new_record(subdomain_record=test_data['subdomain_record'], 
+    database.create_new_record(subdomain_record=test_data['subdomain_record'],
                                api_token=test_data['api_token'])
 
     # Updates an existing DNS record
@@ -78,7 +78,7 @@ def test_record_set_ip_address(runner,
                                       'set-ip',
                                       test_data['subdomain_record'],
                                       '0.0.0.0'])
-    
+
     # Tries to update a non-existent DNS record
     result_fail = runner.invoke(args=['record',
                                       'set-ip',

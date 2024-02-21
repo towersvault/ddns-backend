@@ -2,14 +2,15 @@ from ddns import utils
 from ddns.db import DataHandler
 
 
-def test_record_update(client, 
-                       database: DataHandler, 
+def test_record_update(client,
+                       database: DataHandler,
                        test_data: list):
-    database.create_new_record(subdomain_record=test_data['subdomain_record'], 
+    database.create_new_record(subdomain_record=test_data['subdomain_record'],
                                api_token=test_data['api_token'])
 
     res_get = client.get(f'/record/update?api_token={test_data["api_token"]}')
-    res_post = client.post('/record/update', data={'api_token': test_data['api_token']})
+    res_post = client.post('/record/update',
+                           data={'api_token': test_data['api_token']})
 
     assert res_get.status_code == 200
     assert res_post.status_code == 200
@@ -25,10 +26,10 @@ def test_record_update_wrong_identifier_token(client):
     assert res_post.status_code == 401
 
 
-def test_record_update_wrong_secret_token(client, 
-                                          database: DataHandler, 
+def test_record_update_wrong_secret_token(client,
+                                          database: DataHandler,
                                           test_data: list):
-    database.create_new_record(subdomain_record=test_data['subdomain_record'], 
+    database.create_new_record(subdomain_record=test_data['subdomain_record'],
                                api_token=test_data['api_token'])
 
     identifier, secret = utils.unpack_api_token(test_data['api_token'])
