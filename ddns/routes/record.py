@@ -17,8 +17,9 @@ blueprint = Blueprint('record', __name__, url_prefix='/record')
 
 @blueprint.route('/update', methods=['GET', 'POST'])
 def update():
-    """
-    Updates the provided API token's record to the IP address collected.
+    """HTTP-GET/POST Flask route to update the IP address of a given API token.
+
+    :param api_token: The API token that the IP address should be updated of.
     """
     if request.method == 'POST':
         api_token = request.form['api_token']
@@ -56,6 +57,10 @@ def get():
 @blueprint.cli.command('create')
 @click.argument('subdomain')
 def create_cli(subdomain: str):
+    """Flask CLI function to create a subdomain record.
+
+    :param subdomain: The subdomain record that should be created.
+    """
     database = DataHandler(database_name=current_app.config['DATABASE'])
 
     echo_title = 'DNS Record - Creation'
@@ -80,6 +85,10 @@ def create_cli(subdomain: str):
 @blueprint.cli.command('get')
 @click.argument('subdomain')
 def get_cli(subdomain: str):
+    """Flask CLI function to get information on a subdomain.
+
+    :param subdomain: The subdomain's information that should be retrieved.
+    """
     database = DataHandler(database_name=current_app.config['DATABASE'])
 
     echo_title = 'DNS Record - Information'
@@ -105,6 +114,10 @@ def get_cli(subdomain: str):
 @blueprint.cli.command('reset-api-token')
 @click.argument('subdomain')
 def reset_api_token_cli(subdomain: str):
+    """Flask CLI function to reset the API token of a subdomain.
+
+    :param subdomain: The subdomain of which the API token should be reset.
+    """
     database = DataHandler(database_name=current_app.config['DATABASE'])
 
     echo_title = 'DNS Record - API Token Reset'
@@ -131,6 +144,11 @@ def reset_api_token_cli(subdomain: str):
 @click.argument('subdomain')
 @click.argument('new-ip-address')
 def set_ip_cli(subdomain, new_ip_address):
+    """Flask CLI function to manually set the IP address of a subdomain.
+
+    :param subdomain: The subdomain of which the IP address should be set.
+    :param new-ip-address: The IP address that should be used.
+    """
     database = DataHandler(database_name=current_app.config['DATABASE'])
 
     echo_title = 'DNS Record - Set IP Address'
