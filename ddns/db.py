@@ -1,13 +1,16 @@
-from typing import List
-from sqlalchemy import String, MetaData, create_engine, select, Integer
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
+from sqlalchemy import String
+from sqlalchemy import MetaData
+from sqlalchemy import create_engine
+from sqlalchemy import select
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import Session
 
 from datetime import datetime
 
-from uuid import uuid4
-
-from . import exceptions
-from . import utils
+from ddns import exceptions
+from ddns import utils
 
 import os
 import logging
@@ -44,7 +47,8 @@ class DDNS(Base):
     )
 
     def __repr__(self) -> str:
-        return f'DDNS(subdomain={self.subdomain_record!r}, ip_address={self.ip_address!r})'
+        return (f'DDNS(subdomain={self.subdomain_record!r}, '
+                f'ip_address={self.ip_address!r})')
 
 
 class SingletonMeta(type):
@@ -69,6 +73,11 @@ class DataHandler(metaclass=SingletonMeta):
 
     def identifier_token_exists(self,
                                 api_token: str) -> bool:
+        """Checks if the identifier part of a token exists.
+
+        :param api_token: API token to check.
+        :return: True or False if the Identifier part of the token exists.
+        """
         identifier_token, secret_token = utils.unpack_api_token(api_token)
 
         with self.__open_session() as session:
@@ -80,6 +89,15 @@ class DataHandler(metaclass=SingletonMeta):
 
     def subdomain_record_exists(self,
                                 subdomain_record: str) -> bool:
+        """Checks if a subdomain exists.
+
+        NOTE: Local database is being used. This information
+              will not reflect the information present on a
+              DNS provider's systems (such as DigitalOcean).
+
+        :param subdomain_record: Subdomain record to check.
+        :return: True or False if the subdomain record exists.
+        """
         with self.__open_session() as session:
             query = session.query(
                 DDNS.subdomain_record
@@ -90,6 +108,21 @@ class DataHandler(metaclass=SingletonMeta):
     def create_new_record(self,
                           subdomain_record: str,
                           api_token=None) -> str:
+        """Creates a new subdomain record in the DB.
+
+        The secret part of the API token will be hashed and inserted into
+        the DB.
+
+        NOTE: Local database is being used. This information
+              will not reflect the information present on a
+              DNS provider's systems (such as DigitalOcean).
+
+        :param subdomain_record: Subdomain record to create.
+        :param api_token: Optional. If set, the provided api_token will be
+                          used for the record. If not, an API token will
+                          automatically be generated.
+        :return: The API token that was used for the subdomain record.
+        """
         if not api_token:
             api_token = utils.generate_full_token_pair()
 
@@ -119,6 +152,18 @@ class DataHandler(metaclass=SingletonMeta):
 
     def get_bound_subdomain_record(self,
                                    api_token: str) -> str:
+        """Returns the subdomain record for a given API token.
+
+        The identifier token will be used and the secret ignored.
+
+        NOTE: Local database is being used. This information
+              will not reflect the information present on a
+              DNS provider's systems (such as DigitalOcean).
+
+        :param api_token: The API token that should be checked.
+        :return: The subdomain record tied to the Identifier part of the
+                 API token.
+        """
         identifier_token, secret_token = utils.unpack_api_token(api_token)
 
         if not self.identifier_token_exists(api_token):
@@ -132,8 +177,9 @@ class DataHandler(metaclass=SingletonMeta):
                 .filter_by(identifier_token=identifier_token)
             ).scalar_one()
 
-            if utils.compare_hashed_token(token=secret_token,
-                                          hashed_token=ddns_data.secret_token):
+            if utils.compare_hashed_token(
+                    secret_token=secret_token,
+                    hashed_secret_token=ddns_data.secret_token):
                 return ddns_data.subdomain_record
             else:
                 raise exceptions.SecretTokenIncorrectError(
@@ -142,6 +188,16 @@ class DataHandler(metaclass=SingletonMeta):
 
     def get_record_data(self,
                         subdomain_record: str) -> DDNS:
+        """Returns a DDNS object for a subdomain.
+
+        NOTE: Local database is being used. This information
+              will not reflect the information present on a
+              DNS provider's systems (such as DigitalOcean).
+
+        :param subdomain_record: The subdomain record's information that needs
+                                 to be returned.
+        :return: DDNS object of the subdomain record.
+        """
         with self.__open_session() as session:
             ddns_data = session.execute(
                 select(DDNS)
@@ -153,6 +209,16 @@ class DataHandler(metaclass=SingletonMeta):
     def update_record_ip_address(self,
                                  subdomain_record: str,
                                  ip_address: str):
+        """Updates the IP address for a subdomain.
+
+        NOTE: Local database is being used. This information
+              will not reflect the information present on a
+              DNS provider's systems (such as DigitalOcean).
+
+        :param subdomain_record: The subdomain for which the IP address
+                                 should be updated.
+        :param ip_address: The IP address that should be used.
+        """
         if not self.subdomain_record_exists(subdomain_record):
             full_domain_name = f'{subdomain_record}.{os.getenv("DOMAIN_NAME")}'
             raise exceptions.DNSRecordNotFoundError(
@@ -161,8 +227,8 @@ class DataHandler(metaclass=SingletonMeta):
 
         with self.__open_session() as session:
             ddns_data = session.execute(
-                select(DDNS).
-                filter_by(subdomain_record=subdomain_record)
+                select(DDNS)
+                .filter_by(subdomain_record=subdomain_record)
             ).scalar_one()
 
             ddns_data.ip_address = ip_address
@@ -173,6 +239,16 @@ class DataHandler(metaclass=SingletonMeta):
     def update_record_api_token(self,
                                 subdomain_record: str,
                                 new_api_token=None) -> str:
+        """Updates the API token for a subdomain.
+
+        NOTE: Local database is being used. This information
+              will not reflect the information present on a
+              DNS provider's systems (such as DigitalOcean).
+
+        :param subdomain_record: The subdomain for which the API token
+                                 should be changed.
+        :param new_api_token: The new API token that should be set.
+        """
         if not new_api_token:
             new_api_token = utils.generate_full_token_pair()
 

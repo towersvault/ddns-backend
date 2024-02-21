@@ -1,12 +1,11 @@
-import os
-
 from flask import Flask
 from dotenv import load_dotenv
 
-from .routes import record
+from ddns.routes import record
 
 import config
 import logging
+import os
 
 
 logging.basicConfig(

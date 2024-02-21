@@ -1,8 +1,11 @@
-from flask import Blueprint, jsonify, request, Response, current_app
+from flask import Blueprint
+from flask import request
+from flask import Response
+from flask import current_app
 
-from ddns.db import DataHandler
 from ddns import exceptions
 from ddns import utils
+from ddns.db import DataHandler
 
 import click
 import logging

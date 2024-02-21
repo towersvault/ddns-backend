@@ -1,6 +1,7 @@
 from ddns import utils
 from ddns.db import DataHandler
-from tests.utils import truthy, falsy
+from tests.utils import truthy
+from tests.utils import falsy
 from ddns.exceptions import IdentifierTokenNotFoundError
 from ddns.exceptions import SecretTokenIncorrectError
 
